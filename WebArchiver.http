@@ -1,0 +1,6 @@
+@WebArchiver_HostAddress = http://localhost:5009
+
+GET {{WebArchiver_HostAddress}}/pages/
+Accept: application/json
+
+###
