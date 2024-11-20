@@ -36,7 +36,7 @@ namespace WebArchiver.Controllers
 
             var response = await _pageService.PostPageAsync(pageRequest.URL);
 
-            return Redirect($"https://localhost:7059/api/pages?id={response}");
+            return RedirectPermanent($"https://localhost:7059/api/pages?id={response}");
                 
         }
         [HttpDelete]
