@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using WebArchiver.Entities;
 using WebArchiver.Interfaces;
 
@@ -14,7 +15,15 @@ namespace WebArchiver.Data.Repository
 
         public async Task AddPageAsync(Pages page)
         {
-            var res = await _context.AddAsync(page);
+            await _context.AddAsync(page);
+            await _context.SaveChangesAsync();
+            return;
+        }
+
+        public async Task DeletePage(string id)
+        {
+            var entity = await GetPageByIDAsync(id);
+            _context.Remove(entity);
             await _context.SaveChangesAsync();
             return;
         }

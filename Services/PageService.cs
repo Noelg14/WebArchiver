@@ -4,6 +4,7 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
 using WebArchiver.Entities;
 using WebArchiver.Interfaces;
 namespace WebArchiver.Services
@@ -31,8 +32,10 @@ namespace WebArchiver.Services
         {
             _logger.LogInformation($"Getting page by Id {id}");
             var page = await _pagesRepository.GetPageByIDAsync(id);
+            if (page is null)
+                return string.Empty;
 
-            return page.Content ?? string.Empty;
+            return page.Content;
         }        
         public async Task<string> PostPageAsync(string url)
         {
@@ -55,6 +58,12 @@ namespace WebArchiver.Services
             var httpResp = await _httpClient.GetStringAsync(url);
             HtmlParser htmlParser = new HtmlParser();
             var doc = htmlParser.ParseDocument(httpResp);
+
+            var styles = doc.QuerySelectorAll("link").ToList();
+
+            foreach (var style in styles) {
+                Console.WriteLine(style.GetAttribute("href"));
+            }
 
             var page = new Pages
             {
@@ -84,6 +93,16 @@ namespace WebArchiver.Services
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             return new string(Enumerable.Repeat(chars, length)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        public async Task DeletePageById(string id)
+        {
+            if(string.IsNullOrEmpty(id))
+                throw new ArgumentNullException("id");
+            _logger.LogInformation($"Removing page with id : {id}");
+
+            await _pagesRepository.DeletePage(id);
+            return;
         }
     }
 }

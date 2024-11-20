@@ -19,6 +19,8 @@ namespace WebArchiver.Controllers
         public async Task<ActionResult<string>> GetPage([FromQuery]string id)
         {
             var response = await _pageService.GetPageAsync(id);
+            if(String.IsNullOrEmpty(response))
+                return NotFound();
             return new ContentResult { 
                 Content = response,
                 ContentType = "text/html"
@@ -27,13 +29,22 @@ namespace WebArchiver.Controllers
         [HttpPost]
         public async Task<ActionResult> PostPage([FromBody]PageRequestDTO pageRequest)
         {
+            var url = Request.Scheme+"/"+Request.Host;
             if (pageRequest is null || String.IsNullOrEmpty(pageRequest.URL))
                 return BadRequest("URL is empty");
 
             var response = await _pageService.PostPageAsync(pageRequest.URL);
 
-            return Redirect($"https://localhost:7059/api/pages?id={response}");
+            return Redirect($"{url}/api/pages?id={response}");
                 
+        }
+        [HttpDelete]
+        public async Task<ActionResult> DeletePage([FromQuery] string id)
+        {
+            await _pageService.DeletePageById(id);
+
+            return Ok();
+
         }
     }
 }
