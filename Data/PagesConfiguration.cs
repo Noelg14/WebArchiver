@@ -14,5 +14,14 @@ namespace WebArchiver.Data
             builder.Property(p => p.Created).IsRequired();
 
         }
+    }    public class StylesConfiguration : IEntityTypeConfiguration<Styles>
+    {
+        public void Configure(EntityTypeBuilder<Styles> builder)
+        {
+            builder.Property(p => p.Id).IsRequired();
+            builder.Property(p => p.Content).IsRequired();
+            builder.Property(p => p.CreadtedOn).IsRequired();
+
+        }
     }
 }

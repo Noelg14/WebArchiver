@@ -1,10 +1,12 @@
 ﻿using AngleSharp;
 using AngleSharp.Common;
 using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
+using System.Reflection.Metadata.Ecma335;
 using WebArchiver.Entities;
 using WebArchiver.Interfaces;
 namespace WebArchiver.Services
@@ -14,11 +16,13 @@ namespace WebArchiver.Services
         private readonly ILogger<PageService> _logger;
         private HttpClient _httpClient;
         private IPagesRepository _pagesRepository;
-        public PageService(ILogger<PageService> logger,IPagesRepository pagesRepository)
+        private IStylesRepository _styleRepository;
+        public PageService(ILogger<PageService> logger,IPagesRepository pagesRepository, IStylesRepository styleRepository)
         {
             _logger = logger;
             _httpClient = new HttpClient();
             _pagesRepository = pagesRepository;
+            _styleRepository = styleRepository;
 
             initHttpClient();
         }
@@ -58,18 +62,30 @@ namespace WebArchiver.Services
             var httpResp = await _httpClient.GetStringAsync(url);
             HtmlParser htmlParser = new HtmlParser();
             var doc = htmlParser.ParseDocument(httpResp);
+            var finalHtml = doc.ToHtml();
 
             var styles = doc.QuerySelectorAll("link").ToList();
-
             foreach (var style in styles) {
-                Console.WriteLine(style.GetAttribute("href"));
-            }
+                if (style.GetAttribute("rel").Equals("stylesheet"))
+                {
+                    var styleUrl = style.GetAttribute("href");
+                    var resp = parseStyleUrl(styleUrl, url);
 
+                    _logger.LogInformation($"{resp}");
+
+                    var styleId = await saveStyleAsync(resp);
+                    _logger.LogInformation($"New Style ID : {styleId}");
+
+                    finalHtml = finalHtml.Replace(styleUrl, $"/api/styles/{styleId}");
+                }
+
+
+            }
             var page = new Pages
             {
                 Id = RandomString(),
                 URl = url,
-                Content = doc.ToHtml()
+                Content = finalHtml
             };
             await _pagesRepository.AddPageAsync(page);
             _logger.LogInformation($"Page added to DB - {page.Id}");
@@ -103,6 +119,45 @@ namespace WebArchiver.Services
 
             await _pagesRepository.DeletePage(id);
             return;
+        }
+
+        private string parseStyleUrl(string styleUrl,string url)
+        {
+            if (url.Contains("irishtimes"))
+            {
+                url = "https://irishtimes.com/";
+            }
+            if (!url.EndsWith('/'))
+                url += "/";
+            if (url.EndsWith('/') && styleUrl.StartsWith('/'))
+                styleUrl= styleUrl.Substring(1);
+            if (!styleUrl.StartsWith("http") && styleUrl.StartsWith("//"))
+                return "https:" + styleUrl;
+            if(!styleUrl.StartsWith("http") && !styleUrl.StartsWith("//"))
+                 return url+styleUrl;
+            return styleUrl;
+        }
+
+        public async Task<string> GetStyleById(string id)
+        {
+            var res = await _styleRepository.GetStyleByIdAsync(id);
+            if (res is null)
+                return string.Empty;
+            return res;
+        }
+        private async Task<string> saveStyleAsync(string styleUrl)
+        {
+            var content = await _httpClient.GetStringAsync(styleUrl);
+            if(string.IsNullOrEmpty(content))
+                return string.Empty;
+
+            var style = new Styles
+            {
+                Content = content,
+                Id = RandomString()
+            };
+            await _styleRepository.AddStyleAsync(style);
+            return style.Id;
         }
     }
 }

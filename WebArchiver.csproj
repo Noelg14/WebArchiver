@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Folder Include="DTO\Response\" />
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

@@ -22,6 +22,7 @@ builder.Services.AddDbContext<PagesContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("pages"));
 });
 builder.Services.AddScoped<IPagesRepository,PagesRepository>();
+builder.Services.AddScoped<IStylesRepository,StylesRepository>();
 
 
 var app = builder.Build();
@@ -40,6 +41,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.UseDefaultFiles();
+
 
 //  Migrate in code 
 using var scope = app.Services.CreateScope(); // create a scope for this
@@ -54,4 +57,4 @@ catch(Exception ex)
 
 }
 
-    app.Run();
+app.Run();

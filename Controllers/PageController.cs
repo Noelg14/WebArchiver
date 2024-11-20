@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using WebArchiver.DTO.Request;
+using static System.Net.WebRequestMethods;
 
 namespace WebArchiver.Controllers
 {
@@ -35,12 +36,12 @@ namespace WebArchiver.Controllers
 
             var response = await _pageService.PostPageAsync(pageRequest.URL);
 
-            return Redirect($"{url}/api/pages?id={response}");
+            return Redirect($"https://localhost:7059/api/pages?id={response}");
                 
         }
         [HttpDelete]
         public async Task<ActionResult> DeletePage([FromQuery] string id)
-        {
+        { 
             await _pageService.DeletePageById(id);
 
             return Ok();

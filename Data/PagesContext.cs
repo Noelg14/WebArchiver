@@ -11,6 +11,7 @@ namespace WebArchiver.Data
 
         }
         public DbSet<Pages> Pages { get; set; }
+        public DbSet<Styles> Styles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
