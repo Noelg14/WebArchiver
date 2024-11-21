@@ -11,9 +11,11 @@ namespace WebArchiver.Controllers
     public class PageController : ControllerBase
     {
         private readonly IPageService _pageService;
-        public PageController(IPageService pageService)
+        private readonly IConfiguration _configuration;
+        public PageController(IPageService pageService,IConfiguration configuration)
         {
             _pageService = pageService; 
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -36,7 +38,9 @@ namespace WebArchiver.Controllers
 
             var response = await _pageService.PostPageAsync(pageRequest.URL);
 
-            return RedirectPermanent($"https://localhost:7059/api/pages?id={response}");
+            var resUrl = _configuration["host"] + $"api/pages?id={response}";
+
+            return RedirectPermanent(resUrl);
                 
         }
         [HttpDelete]
