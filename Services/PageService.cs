@@ -29,7 +29,7 @@ namespace WebArchiver.Services
 
         private void initHttpClient()
         {
-            _httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("Googlebot");
+            _httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
         }
 
         public async Task<string> GetPageAsync(string id)
@@ -123,18 +123,23 @@ namespace WebArchiver.Services
 
         private string parseStyleUrl(string styleUrl,string url)
         {
+            var root = "https://" + url.Split("https://")[1].Split('/')[0];
+            if (!url.StartsWith("https://"))
+                root = "http://"+url.Split("http://")[1].Split('/')[0];
+
+            _logger.LogInformation($"{root}");
             if (url.Contains("irishtimes"))
             {
                 url = "https://irishtimes.com/";
             }
             if (!url.EndsWith('/'))
                 url += "/";
-            if (url.EndsWith('/') && styleUrl.StartsWith('/'))
-                styleUrl= styleUrl.Substring(1);
+            //if (url.EndsWith('/') && styleUrl.StartsWith('/'))
+            //    styleUrl = styleUrl.Substring(1);
             if (!styleUrl.StartsWith("http") && styleUrl.StartsWith("//"))
                 return "https:" + styleUrl;
             if(!styleUrl.StartsWith("http") && !styleUrl.StartsWith("//"))
-                 return url+styleUrl;
+                 return root +styleUrl;
             return styleUrl;
         }
 
