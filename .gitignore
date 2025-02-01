@@ -4,3 +4,6 @@
 *.db
 *.json
 **.vs
+
+**.pubxml
+**.pubxml.user
