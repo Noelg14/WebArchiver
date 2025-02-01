@@ -1,4 +1,6 @@
-﻿namespace WebArchiver.DTO.Request
+﻿using System.Text.Json.Serialization;
+
+namespace WebArchiver.DTO.Request
 {
     public class PageRequestDTO
     {

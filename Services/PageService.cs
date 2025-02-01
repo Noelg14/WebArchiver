@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Reflection.Metadata.Ecma335;
+using System.Text.RegularExpressions;
+using WebArchiver.DTO.Response;
 using WebArchiver.Entities;
 using WebArchiver.Interfaces;
 namespace WebArchiver.Services
@@ -17,6 +19,7 @@ namespace WebArchiver.Services
         private HttpClient _httpClient;
         private IPagesRepository _pagesRepository;
         private IStylesRepository _styleRepository;
+        private readonly string _apostrapheRegex = "(?<![\\[\\]()}{:;, } |?=])['](?![\\[\\]:;,()}{}?= |])";
         public PageService(ILogger<PageService> logger,IPagesRepository pagesRepository, IStylesRepository styleRepository)
         {
             _logger = logger;
@@ -63,6 +66,7 @@ namespace WebArchiver.Services
             HtmlParser htmlParser = new HtmlParser();
             var doc = htmlParser.ParseDocument(httpResp);
             var finalHtml = doc.ToHtml();
+            finalHtml = Regex.Replace(finalHtml, _apostrapheRegex, "&#39;");
 
             var styles = doc.QuerySelectorAll("link").ToList();
             foreach (var style in styles) {
@@ -74,12 +78,23 @@ namespace WebArchiver.Services
                     _logger.LogInformation($"{resp}");
 
                     var styleId = await saveStyleAsync(resp);
-                    _logger.LogInformation($"New Style ID : {styleId}");
+                    if (!string.IsNullOrEmpty(styleId))
+                    {
+                        _logger.LogInformation($"New Style ID : {styleId}");
+                        finalHtml = finalHtml.Replace(styleUrl, $"/api/styles/{styleId}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"[INFO] Could not get stylesheet, using default...");
+                        if(styleUrl.StartsWith("http"))
+                            finalHtml = finalHtml.Replace(styleUrl, styleUrl);
+                        else if (!url.EndsWith('/') && !styleUrl.StartsWith('/'))
+                            finalHtml = finalHtml.Replace(styleUrl, url + "/" + styleUrl);
+                        else
+                            finalHtml = finalHtml.Replace(styleUrl, url + styleUrl);
+                    }
 
-                    finalHtml = finalHtml.Replace(styleUrl, $"/api/styles/{styleId}");
                 }
-
-
             }
             var page = new Pages
             {
@@ -123,9 +138,11 @@ namespace WebArchiver.Services
 
         private string parseStyleUrl(string styleUrl,string url)
         {
-            var root = "https://" + url.Split("https://")[1].Split('/')[0];
+            var root = "";
             if (!url.StartsWith("https://"))
                 root = "http://"+url.Split("http://")[1].Split('/')[0];
+            else
+                root = "https://" + url.Split("https://")[1].Split('/')[0];
 
             _logger.LogInformation($"{root}");
             if (url.Contains("irishtimes"))
@@ -139,7 +156,7 @@ namespace WebArchiver.Services
             if (!styleUrl.StartsWith("http") && styleUrl.StartsWith("//"))
                 return "https:" + styleUrl;
             if(!styleUrl.StartsWith("http") && !styleUrl.StartsWith("//"))
-                 return root +styleUrl;
+                 return url +styleUrl;
             return styleUrl;
         }
 
@@ -152,17 +169,32 @@ namespace WebArchiver.Services
         }
         private async Task<string> saveStyleAsync(string styleUrl)
         {
-            var content = await _httpClient.GetStringAsync(styleUrl);
-            if(string.IsNullOrEmpty(content))
-                return string.Empty;
-
-            var style = new Styles
+            try
             {
-                Content = content,
-                Id = RandomString()
-            };
-            await _styleRepository.AddStyleAsync(style);
-            return style.Id;
+                var content = await _httpClient.GetStringAsync(styleUrl);
+                if (string.IsNullOrEmpty(content))
+                    return string.Empty;
+
+                var style = new Styles
+                {
+                    Content = content,
+                    Id = RandomString()
+                };
+                await _styleRepository.AddStyleAsync(style);
+                return style.Id;
+
+            }catch(Exception ex)
+            {
+                _logger.LogError($"[Error][Page Service] Error Saving StyleSheet: {0}",ex.Message);
+                return null;
+
+            }
+
+        }
+
+        public async Task<ResponseDTO<PageResponseDTO>> GetAllPages(int Size,int Offset)
+        {
+            return await _pagesRepository.GetAllPages(Size,Offset);
         }
     }
 }

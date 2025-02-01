@@ -1,4 +1,5 @@
-﻿using WebArchiver.Entities;
+﻿using WebArchiver.DTO.Response;
+using WebArchiver.Entities;
 
 namespace WebArchiver.Interfaces
 {
@@ -8,5 +9,6 @@ namespace WebArchiver.Interfaces
         public Task<Pages> GetPageByUrlAsync(string url);
         public Task AddPageAsync(Pages page);
         public Task DeletePage(string id);
+        public Task<ResponseDTO<PageResponseDTO>> GetAllPages(int Size,int Offset);
     }
 }
