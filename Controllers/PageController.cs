@@ -23,6 +23,8 @@ namespace WebArchiver.Controllers
         [HttpGet]
         public async Task<ActionResult<string>> GetPage([FromQuery]string id)
         {
+            if(string.IsNullOrWhiteSpace(id))
+                return BadRequest("Id is empty");
             var response = await _pageService.GetPageAsync(id);
             if(string.IsNullOrEmpty(response))
                 return NotFound();
@@ -35,12 +37,15 @@ namespace WebArchiver.Controllers
         [HttpPost]
         public async Task<ActionResult> PostPage([FromBody]PageRequestDTO pageRequest)
         {
-            var url = Request.Scheme+"/"+Request.Host;
+            //var url = Request.Scheme+"/"+Request.Host;
             if (pageRequest is null || string.IsNullOrEmpty(pageRequest.URL))
                 return BadRequest("URL is empty");
-            if(!pageRequest.URL.StartsWith("https://")) // assume https always.
+            if(!pageRequest.URL.StartsWith("http")) // assume https always.
                 pageRequest.URL = "https://" + pageRequest.URL;
+
             var response = await _pageService.PostPageAsync(pageRequest.URL);
+            if(string.IsNullOrEmpty(response))
+                return BadRequest("An error Ocurred");
 
             var resUrl = _configuration["host"] + $"api/pages?id={response}";
 

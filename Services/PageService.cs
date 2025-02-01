@@ -54,10 +54,8 @@ namespace WebArchiver.Services
             var pageId = await GetPageByUrl(url);
             if (!string.IsNullOrEmpty(pageId))
             {
-
                 _logger.LogInformation($"URL Exists returning - {pageId}");
                 return pageId;
-
             }
 
             _logger.LogInformation($"URL does not exist archiving new page");
@@ -65,6 +63,7 @@ namespace WebArchiver.Services
             var httpResp = await _httpClient.GetStringAsync(url);
             HtmlParser htmlParser = new HtmlParser();
             var doc = htmlParser.ParseDocument(httpResp);
+            //var title = doc.Title;
             var finalHtml = doc.ToHtml();
             finalHtml = Regex.Replace(finalHtml, _apostrapheRegex, "&#39;");
 
@@ -75,7 +74,7 @@ namespace WebArchiver.Services
                     var styleUrl = style.GetAttribute("href");
                     var resp = parseStyleUrl(styleUrl, url);
 
-                    _logger.LogInformation($"{resp}");
+                    _logger.LogInformation($"[INFO] StyleURL - {resp}");
 
                     var styleId = await saveStyleAsync(resp);
                     if (!string.IsNullOrEmpty(styleId))
@@ -93,7 +92,6 @@ namespace WebArchiver.Services
                         else
                             finalHtml = finalHtml.Replace(styleUrl, url + styleUrl);
                     }
-
                 }
             }
             var page = new Pages
@@ -138,6 +136,14 @@ namespace WebArchiver.Services
 
         private string parseStyleUrl(string styleUrl,string url)
         {
+            if (styleUrl.StartsWith('.'))
+            {
+                var arr = url.Split('/');
+                arr[^1] = null;
+                url = string.Join("/", arr);
+                styleUrl = styleUrl.Replace("./", "");
+            }
+
             var root = "";
             if (!url.StartsWith("https://"))
                 root = "http://"+url.Split("http://")[1].Split('/')[0];
@@ -156,7 +162,7 @@ namespace WebArchiver.Services
             if (!styleUrl.StartsWith("http") && styleUrl.StartsWith("//"))
                 return "https:" + styleUrl;
             if(!styleUrl.StartsWith("http") && !styleUrl.StartsWith("//"))
-                 return url +styleUrl;
+                 return url + styleUrl;
             return styleUrl;
         }
 
