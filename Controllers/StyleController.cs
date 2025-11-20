@@ -8,18 +8,19 @@ namespace WebArchiver.Controllers
     public class StyleController : ControllerBase
     {
         private readonly IPageService _pageService;
+
         public StyleController(IPageService pageService)
         {
             _pageService = pageService;
         }
 
         [HttpGet("{id}")]
-        public async Task<ContentResult> GetStyleById(string id) { 
-        
-           var result = await _pageService.GetStyleById(id);
+        public async Task<ContentResult> GetStyleById(string id)
+        {
+            var result = await _pageService.GetStyleById(id);
             if (string.IsNullOrEmpty(result))
                 return new ContentResult { StatusCode = 404 };
-            return new ContentResult { Content = result,ContentType = "text/css" };
+            return new ContentResult { Content = result, ContentType = "text/css" };
         }
     }
 }

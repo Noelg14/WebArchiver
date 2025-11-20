@@ -1,16 +1,18 @@
-﻿using AngleSharp;
+﻿using System;
+using System.Reflection.Metadata.Ecma335;
+using System.Text.RegularExpressions;
+using AngleSharp;
 using AngleSharp.Common;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.RegularExpressions;
 using WebArchiver.DTO.Response;
 using WebArchiver.Entities;
 using WebArchiver.Interfaces;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
+
 namespace WebArchiver.Services
 {
     public class PageService : IPageService
@@ -19,20 +21,31 @@ namespace WebArchiver.Services
         private HttpClient _httpClient;
         private IPagesRepository _pagesRepository;
         private IStylesRepository _styleRepository;
-        private readonly string _apostrapheRegex = "(?<![\\[\\]()}{:;, } |?=])['](?![\\[\\]:;,()}{}?= |])";
-        public PageService(ILogger<PageService> logger,IPagesRepository pagesRepository, IStylesRepository styleRepository)
+        private readonly string _apostrapheRegex =
+            "(?<![\\[\\]()}{:;, } |?=])['](?![\\[\\]:;,()}{}?= |])";
+        private string userAgent = string.Empty;
+
+        public PageService(
+
+            ILogger<PageService> logger,
+            IPagesRepository pagesRepository,
+            IStylesRepository styleRepository,
+            IConfiguration configuration
+        )
         {
             _logger = logger;
             _httpClient = new HttpClient();
             _pagesRepository = pagesRepository;
             _styleRepository = styleRepository;
-
+            userAgent = configuration["userAgent"] ?? "WebArchiver/1.0 (+https://webarchiver20241121101430.azurewebsites.net)";
             initHttpClient();
         }
 
         private void initHttpClient()
         {
-            _httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)");
+            _httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(
+                userAgent
+            );
         }
 
         public async Task<string> GetPageAsync(string id)
@@ -43,13 +56,13 @@ namespace WebArchiver.Services
                 return string.Empty;
 
             return page.Content;
-        }        
+        }
+
         public async Task<string> PostPageAsync(string url)
         {
             _logger.LogInformation($"Got Request with url {url}");
             if (string.IsNullOrEmpty(url))
                 return string.Empty;
-
 
             var pageId = await GetPageByUrl(url);
             if (!string.IsNullOrEmpty(pageId))
@@ -68,7 +81,8 @@ namespace WebArchiver.Services
             finalHtml = Regex.Replace(finalHtml, _apostrapheRegex, "&#39;");
 
             var styles = doc.QuerySelectorAll("link").ToList();
-            foreach (var style in styles) {
+            foreach (var style in styles)
+            {
                 if (style.GetAttribute("rel").Equals("stylesheet"))
                 {
                     var styleUrl = style.GetAttribute("href");
@@ -84,8 +98,10 @@ namespace WebArchiver.Services
                     }
                     else
                     {
-                        _logger.LogInformation($"[INFO] Could not get stylesheet, using default...");
-                        if(styleUrl.StartsWith("http"))
+                        _logger.LogInformation(
+                            $"[INFO] Could not get stylesheet, using default..."
+                        );
+                        if (styleUrl.StartsWith("http"))
                             finalHtml = finalHtml.Replace(styleUrl, styleUrl);
                         else if (!url.EndsWith('/') && !styleUrl.StartsWith('/'))
                             finalHtml = finalHtml.Replace(styleUrl, url + "/" + styleUrl);
@@ -97,8 +113,8 @@ namespace WebArchiver.Services
             var page = new Pages
             {
                 Id = RandomString(),
-                URl = url,
-                Content = finalHtml
+                URL = url,
+                Content = finalHtml,
             };
             await _pagesRepository.AddPageAsync(page);
             _logger.LogInformation($"Page added to DB - {page.Id}");
@@ -114,19 +130,21 @@ namespace WebArchiver.Services
             else
                 return page.Id;
         }
+
         private static Random random = new Random();
 
         private string RandomString()
         {
             int length = 10;
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+            return new string(
+                Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()
+            );
         }
 
         public async Task DeletePageById(string id)
         {
-            if(string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(id))
                 throw new ArgumentNullException("id");
             _logger.LogInformation($"Removing page with id : {id}");
 
@@ -134,19 +152,19 @@ namespace WebArchiver.Services
             return;
         }
 
-        private string parseStyleUrl(string styleUrl,string url)
+        private string parseStyleUrl(string styleUrl, string url)
         {
             if (styleUrl.StartsWith('.'))
             {
                 var arr = url.Split('/');
-                arr[^1] = null;
+                arr[^1] = string.Empty; // remove last element
                 url = string.Join("/", arr);
                 styleUrl = styleUrl.Replace("./", "");
             }
 
             var root = "";
             if (!url.StartsWith("https://"))
-                root = "http://"+url.Split("http://")[1].Split('/')[0];
+                root = "http://" + url.Split("http://")[1].Split('/')[0];
             else
                 root = "https://" + url.Split("https://")[1].Split('/')[0];
 
@@ -161,8 +179,8 @@ namespace WebArchiver.Services
             //    styleUrl = styleUrl.Substring(1);
             if (!styleUrl.StartsWith("http") && styleUrl.StartsWith("//"))
                 return "https:" + styleUrl;
-            if(!styleUrl.StartsWith("http") && !styleUrl.StartsWith("//"))
-                 return url + styleUrl;
+            if (!styleUrl.StartsWith("http") && !styleUrl.StartsWith("//"))
+                return url + styleUrl;
             return styleUrl;
         }
 
@@ -173,6 +191,7 @@ namespace WebArchiver.Services
                 return string.Empty;
             return res;
         }
+
         private async Task<string> saveStyleAsync(string styleUrl)
         {
             try
@@ -181,26 +200,20 @@ namespace WebArchiver.Services
                 if (string.IsNullOrEmpty(content))
                     return string.Empty;
 
-                var style = new Styles
-                {
-                    Content = content,
-                    Id = RandomString()
-                };
+                var style = new Styles { Content = content, Id = RandomString() };
                 await _styleRepository.AddStyleAsync(style);
                 return style.Id;
-
-            }catch(Exception ex)
-            {
-                _logger.LogError($"[Error][Page Service] Error Saving StyleSheet: {0}",ex.Message);
-                return null;
-
             }
-
+            catch (Exception ex)
+            {
+                _logger.LogError($"[Error][Page Service] Error Saving StyleSheet: {0}", ex.Message);
+                return null;
+            }
         }
 
-        public async Task<ResponseDTO<PageResponseDTO>> GetAllPages(int Size,int Offset)
+        public async Task<ResponseDTO<PageResponseDTO>> GetAllPages(int Size, int Offset)
         {
-            return await _pagesRepository.GetAllPages(Size,Offset);
+            return await _pagesRepository.GetAllPages(Size, Offset);
         }
     }
 }

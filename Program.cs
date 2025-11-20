@@ -10,20 +10,20 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMvcCore();
 
-builder.Services.AddScoped<IPageService,PageService>();
+builder.Services.AddScoped<IPageService, PageService>();
 
 builder.Services.AddDbContext<PagesContext>(opt =>
 {
     opt.UseSqlite(builder.Configuration.GetConnectionString("pages"));
 });
-builder.Services.AddScoped<IPagesRepository,PagesRepository>();
-builder.Services.AddScoped<IStylesRepository,StylesRepository>();
-
+builder.Services.AddScoped<IPagesRepository, PagesRepository>();
+builder.Services.AddScoped<IStylesRepository, StylesRepository>();
 
 var app = builder.Build();
 
@@ -36,16 +36,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
 app.UseAuthorization();
 
 app.MapControllers();
 app.UseStaticFiles();
+
 //app.UseDefaultFiles();
 app.MapFallbackToFile("index.html");
 
-
-//  Migrate in code 
+//  Migrate in code
 using var scope = app.Services.CreateScope(); // create a scope for this
 var services = scope.ServiceProvider;
 var context = services.GetRequiredService<PagesContext>(); // get the db context from the scope service
@@ -53,9 +52,6 @@ try
 {
     await context.Database.MigrateAsync(); //apply migration if pending
 }
-catch(Exception ex)
-{
-
-}
+catch (Exception) { }
 
 app.Run();

@@ -17,19 +17,19 @@ namespace WebArchiver.Migrations
                 {
                     Id = table.Column<string>(type: "TEXT", nullable: false),
                     Content = table.Column<string>(type: "TEXT", nullable: false),
-                    CreadtedOn = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreadtedOn = table.Column<DateTime>(type: "TEXT", nullable: false),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Styles", x => x.Id);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Styles");
+            migrationBuilder.DropTable(name: "Styles");
         }
     }
 }

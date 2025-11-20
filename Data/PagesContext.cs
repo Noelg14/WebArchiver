@@ -1,15 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Reflection;
+﻿using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using WebArchiver.Entities;
 
 namespace WebArchiver.Data
 {
     public class PagesContext : DbContext
     {
-        public PagesContext(DbContextOptions<PagesContext> options) : base(options)
-        {
+        public PagesContext(DbContextOptions<PagesContext> options)
+            : base(options) { }
 
-        }
         public DbSet<Pages> Pages { get; set; }
         public DbSet<Styles> Styles { get; set; }
 
@@ -20,4 +19,3 @@ namespace WebArchiver.Data
         }
     }
 }
-

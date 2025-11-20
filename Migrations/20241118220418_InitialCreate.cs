@@ -18,19 +18,19 @@ namespace WebArchiver.Migrations
                     Id = table.Column<string>(type: "TEXT", nullable: false),
                     URl = table.Column<string>(type: "TEXT", nullable: false),
                     Content = table.Column<string>(type: "TEXT", nullable: false),
-                    Created = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Created = table.Column<DateTime>(type: "TEXT", nullable: false),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pages", x => x.Id);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Pages");
+            migrationBuilder.DropTable(name: "Pages");
         }
     }
 }

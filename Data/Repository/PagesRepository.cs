@@ -9,6 +9,7 @@ namespace WebArchiver.Data.Repository
     public class PagesRepository : IPagesRepository
     {
         private PagesContext _context;
+
         public PagesRepository(PagesContext context)
         {
             _context = context;
@@ -36,16 +37,17 @@ namespace WebArchiver.Data.Repository
 
         public async Task<Pages> GetPageByUrlAsync(string url)
         {
-            return await _context.Pages.FirstOrDefaultAsync(p => p.URl == url);
-        }        
+            return await _context.Pages.FirstOrDefaultAsync(p => p.URL == url);
+        }
+
         public async Task<ResponseDTO<PageResponseDTO>> GetAllPages(int Size, int Offset)
         {
             var total = await _context.Pages.CountAsync();
             var query = _context.Pages.Select(p => new PageResponseDTO
             {
                 Id = p.Id,
-                Url = p.URl,
-                Created = p.Created
+                Url = p.URL,
+                Created = p.Created,
             });
 
             if (Offset > 0)
@@ -60,7 +62,7 @@ namespace WebArchiver.Data.Repository
             {
                 Data = data,
                 TotalPages = data.Count,
-                MoreRecords = currPageIndex < total ? true : false
+                MoreRecords = currPageIndex < total ? true : false,
             };
         }
     }

@@ -2,21 +2,19 @@
 {
     public class Pages
     {
-        public Pages()
-        {
-        }
+        public Pages() { }
 
-        public Pages(string id, string uRl, string content, DateTime created)
+        public Pages(string id, string url, string content, DateTime created)
         {
             Id = id;
-            URl = uRl;
+            URL = url;
             Content = content;
             Created = created;
         }
 
-        public string Id { get; set; }
-        public string URl { get; set; }
-        public string Content { get; set; }
+        public required string Id { get; set; }
+        public required string URL { get; set; }
+        public string Content { get; set; } = string.Empty;
         public DateTime Created { get; set; } = DateTime.Now;
     }
 }

@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using WebArchiver.Entities;
 
 namespace WebArchiver.Data
@@ -9,19 +9,19 @@ namespace WebArchiver.Data
         public void Configure(EntityTypeBuilder<Pages> builder)
         {
             builder.Property(p => p.Id).IsRequired();
-            builder.Property(p => p.URl).IsRequired();
+            builder.Property(p => p.URL).IsRequired();
             builder.Property(p => p.Content).IsRequired();
             builder.Property(p => p.Created).IsRequired();
-
         }
-    }    public class StylesConfiguration : IEntityTypeConfiguration<Styles>
+    }
+
+    public class StylesConfiguration : IEntityTypeConfiguration<Styles>
     {
         public void Configure(EntityTypeBuilder<Styles> builder)
         {
             builder.Property(p => p.Id).IsRequired();
             builder.Property(p => p.Content).IsRequired();
             builder.Property(p => p.CreadtedOn).IsRequired();
-
         }
     }
 }

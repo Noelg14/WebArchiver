@@ -30,8 +30,11 @@
     </script>
     <style>
         body{
-            background-color: slategrey;
+            background-color: pink;
+            width: 100%;
+            overflow-x: hidden;
         }
+        
     </style>
 </head>
 <body class="">
@@ -39,9 +42,9 @@
 
         <div class="row col-12 justify-content-around">
             <div class="col-6">
-                <label for="url" class="form-label h3" >URL to archive</label><br>
+                <h3 for="url" class="form-label h3" >URL to Archive</h3><br>
                 <input type="text" id="url"  class="form-control mx-2" placeholder="URL"><br><br>
-                <input type="submit" value="Submit" contenteditable="false" onclick="submit()" class="btn btn-primary col-6"/>
+                <input type="submit" value="Submit" contenteditable="false" onclick="submit()" class="btn btn-light col-6"/>
                 
                 <div>
                     <p id="response"></p>
